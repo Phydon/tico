@@ -1,5 +1,5 @@
 # TODO accept multiple time pairs and calculate overall timedelta
-# TODO e.g. teimdelta from 06:01 - 08:04 + 08:15 - 12:04 + 12:45 - 15:00
+# TODO e.g. timedelta from 06:01 - 08:04 + 08:15 - 12:04 + 12:45 - 15:00
 import sys
 import re
 from datetime import datetime as dt
@@ -63,8 +63,7 @@ def str_to_dt(time_str: str) -> dt:
     try:
         return dt.strptime(time_str, "%H:%M")
     except ValueError as err:
-        # INFO handle case when given time format isn't valid
-        # INFO e.g. '2501 1234'
+        # handle case when given time format isn't valid -> e.g. '2501 1234'
         print(f"ERROR: Invalid input: '{time_str}' - {err}")
         sys.exit(1)
 
@@ -74,7 +73,7 @@ def get_delta(t1: dt, t2: dt) -> td:
 
 
 def td_to_dt(td) -> dt:
-    # INFO handle negative timedelta
+    # handle negative timedelta
     if "-" in str(td):
         print(
             f"ERROR: Invalid datetime order - negative timedelta calculated: '{str(td)}'"
