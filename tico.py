@@ -1,35 +1,19 @@
-# TODO accept multiple time pairs and calculate overall timedelta
-# TODO e.g. timedelta from 06:01 - 08:04 + 08:15 - 12:04 + 12:45 - 15:00
 import sys
 import re
 from datetime import datetime as dt
-from datetime import timedelta as td
 
 
 def main():
     inp = get_args()
 
-    # TODO accept more than one input time-pair (e.g.: '0600 1200')
-    # TODO get input pairs if more than 2 pairs provided
-    # TODO check for each pair of time strings
-    # TODO e.g.: pair 1: '0600 1200'; pair2: '1300 1330'
-    check_format(inp)
+    times = []
+    for arg in inp:
+        check_format(arg)
+        times.append(str_to_dt(to_time_str(arg)))
 
-    inp = inp.split()
-    inp1 = inp[0]
-    inp2 = inp[1]
+    delta = get_delta(times)
 
-    time_str1 = to_time_str(inp1)
-    time_str2 = to_time_str(inp2)
-
-    time1 = str_to_dt(time_str1)
-    time2 = str_to_dt(time_str2)
-
-    delta = get_delta(time1, time2)
-
-    delta_datetime = td_to_dt(delta)
-
-    datetime_str = dt_to_str(delta_datetime)
+    datetime_str = dt_to_str(delta)
 
     print(datetime_str)
 
@@ -39,14 +23,19 @@ def get_args():
         print(f"Usage: {sys.argv[0]} <TIME> <TIME> <...>")
         sys.exit(1)
 
-    return " ".join(sys.argv[1:])
+    # only pairs are allowed -> so number of timestamps should be an even number
+    if len(sys.argv[:]) % 2 == 0:
+        print("ERROR - Invalid number of arguments: Enter valid time pairs")
+        sys.exit(1)
+
+    return sys.argv[1:]
 
 
 def check_format(inp: str):
-    rex = re.compile(r"^[0-9]{4}(\s)+[0-9]{4}$")
+    rex = re.compile(r"^[0-9]{4}$")
 
     if not rex.match(inp):
-        print(f"ERROR - invalid input: '{inp}' - Format should be '0000 0000'")
+        print(f"ERROR - invalid input: '{inp}' - Format per timestamp should be '0000'")
         sys.exit(1)
 
 
@@ -64,23 +53,22 @@ def str_to_dt(time_str: str) -> dt:
         return dt.strptime(time_str, "%H:%M")
     except ValueError as err:
         # handle case when given time format isn't valid -> e.g. '2501 1234'
-        print(f"ERROR: Invalid input: '{time_str}' - {err}")
+        print(f"ERROR - Invalid input: '{time_str}' - {err}")
         sys.exit(1)
 
 
-def get_delta(t1: dt, t2: dt) -> td:
-    return t2 - t1
+def get_delta(times: list[dt]) -> dt:
+    assert len(times) % 2 == 0, "Odd number of times found -> pairs needed"
 
+    # calculate delta between pairs and add delta together
+    delta = dt.strptime("00:00", "%H:%M")
+    for i in range(0, len(times), 2):
+        delta += times[i + 1] - times[i]
 
-def td_to_dt(td) -> dt:
-    # handle negative timedelta
-    if "-" in str(td):
-        print(
-            f"ERROR: Invalid datetime order - negative timedelta calculated: '{str(td)}'"
-        )
-        sys.exit(1)
+        if i == len(times) - 2:
+            break
 
-    return dt.strptime(str(td), "%H:%M:%S")
+    return delta
 
 
 def dt_to_str(datetime: dt) -> str:
